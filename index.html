@@ -1,0 +1,1186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pharma MR Demo App (India) — Offline</title>
+  <style>
+    :root{--bg:#0b0b0f;--card:#141421;--muted:#9aa0aa;--text:#f3f4f6;--gold:#d4af37;--line:#26263a;--ok:#16a34a;--bad:#ef4444;}
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+    body{margin:0;background:linear-gradient(135deg,#050508,#101018 60%,#1a1406);color:var(--text);}
+    header{position:sticky;top:0;z-index:10;background:rgba(10,10,16,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+    .wrap{max-width:1200px;margin:0 auto;padding:14px 16px;}
+    .brand{display:flex;align-items:center;gap:10px}
+    .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#000,var(--gold));border:1px solid rgba(212,175,55,.35)}
+    .brand h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.3px}
+    .brand small{display:block;color:var(--muted);font-weight:500}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .pill{padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:12px}
+    .btn{cursor:pointer;border:1px solid var(--line);background:#0f0f18;color:var(--text);padding:9px 12px;border-radius:12px;font-weight:600}
+    .btn:hover{border-color:rgba(212,175,55,.6)}
+    .btn.primary{background:linear-gradient(135deg,#1a1406,#0f0f18);border-color:rgba(212,175,55,.5)}
+    .btn.danger{border-color:rgba(239,68,68,.5);background:#140b10}
+    .btn.ghost{background:transparent}
+    .grid{display:grid;grid-template-columns:280px 1fr;gap:12px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:rgba(20,20,33,.85);border:1px solid var(--line);border-radius:18px;padding:14px}
+    .card h2{margin:0 0 10px 0;font-size:14px}
+    .muted{color:var(--muted)}
+    .nav{display:flex;flex-direction:column;gap:8px}
+    .nav button{width:100%;text-align:left}
+    .nav .active{border-color:rgba(212,175,55,.75);box-shadow:0 0 0 2px rgba(212,175,55,.12) inset}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    @media(max-width:980px){.kpi{grid-template-columns:repeat(2,1fr)}}
+    .k{padding:12px;border-radius:16px;border:1px solid var(--line);background:#10101a}
+    .k b{font-size:18px}
+    .k div{color:var(--muted);font-size:12px;margin-top:2px}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:980px){.split{grid-template-columns:1fr}}
+    label{display:block;font-size:12px;color:var(--muted);margin:8px 0 6px}
+    input,select,textarea{width:100%;padding:10px 10px;border-radius:12px;border:1px solid var(--line);background:#0f0f18;color:var(--text);outline:none}
+    textarea{min-height:86px;resize:vertical}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+    th{color:var(--muted);font-weight:700;text-align:left;font-size:12px}
+    .tag{display:inline-flex;gap:6px;align-items:center;padding:3px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted)}
+    .tag.gold{border-color:rgba(212,175,55,.5);color:#f6e7b0}
+    .tag.ok{border-color:rgba(22,163,74,.5);color:#bbf7d0}
+    .tag.bad{border-color:rgba(239,68,68,.5);color:#fecaca}
+    .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .right{margin-left:auto}
+    .hr{height:1px;background:var(--line);margin:12px 0}
+    .tiny{font-size:11px;color:var(--muted)}
+    .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0f0f18;border:1px solid var(--line);padding:10px 12px;border-radius:999px;display:none;z-index:999}
+    .warn{color:#fde68a}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="row">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Pharma MR Demo App (India) <span class="muted">• Offline</span></h1>
+          <small class="muted">Doctor master • Visit tracking • GPS (optional) • Dashboards • Manager view • Export</small>
+        </div>
+      </div>
+      <div class="flex">
+        <span class="pill" id="sessionPill">Not signed in</span>
+        <button class="btn ghost" id="btnSeed">Load Sample Data</button>
+        <button class="btn danger" id="btnReset">Reset Demo</button>
+        <button class="btn primary" id="btnLogout" style="display:none;">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="loginCard" class="card" style="max-width:520px;margin:18px auto;">
+    <h2>Login</h2>
+    <div class="muted">Use demo credentials: <span class="tag gold">mr1 / 1234</span> <span class="tag gold">mr2 / 1234</span> <span class="tag gold">mgr1 / 1234</span></div>
+    <div class="split" style="margin-top:10px;">
+      <div>
+        <label>Username</label>
+        <input id="lgUser" placeholder="mr1" />
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="lgPass" type="password" placeholder="1234" />
+      </div>
+    </div>
+    <div class="flex" style="margin-top:12px;">
+      <button class="btn primary" id="btnLogin">Sign in</button>
+      <span class="tiny">Tip: Works offline (LocalStorage). GPS capture requires HTTPS or localhost in some browsers.</span>
+    </div>
+  </div>
+
+  <div id="app" style="display:none;">
+    <div class="grid">
+      <aside class="card">
+        <h2>Menu</h2>
+        <div class="nav">
+          <button class="btn" data-tab="dashboard" id="tabBtn-dashboard">Dashboard</button>
+          <button class="btn" data-tab="doctors" id="tabBtn-doctors">Doctor Master</button>
+          <button class="btn" data-tab="plan" id="tabBtn-plan">Daily Plan</button>
+          <button class="btn" data-tab="visits" id="tabBtn-visits">Visit / Call Reporting</button>
+          <button class="btn" data-tab="manager" id="tabBtn-manager">Manager View</button>
+          <button class="btn" data-tab="audit" id="tabBtn-audit">Audit Log</button>
+          <button class="btn" data-tab="export" id="tabBtn-export">Export</button>
+        </div>
+        <div class="hr"></div>
+        <div class="tiny">
+          <div><b class="warn">Compliance demo note:</b> In real pharma systems, add approvals/version control for content and strict access control.</div>
+          <div style="margin-top:6px;">Data stored locally: <span class="tag">LocalStorage</span></div>
+        </div>
+      </aside>
+
+      <main>
+        <!-- DASHBOARD -->
+        <section class="card" id="tab-dashboard" style="display:none;">
+          <div class="flex">
+            <h2 style="margin:0;">Dashboard</h2>
+            <span class="right tag" id="dashRangeTag">Last 7 days</span>
+            <select id="dashRange" style="max-width:180px;">
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="9999">All time</option>
+            </select>
+          </div>
+
+          <div class="kpi" style="margin-top:12px;">
+            <div class="k"><b id="kCalls">0</b><div>Total Calls</div></div>
+            <div class="k"><b id="kDoctors">0</b><div>Total Doctors</div></div>
+            <div class="k"><b id="kCoverage">0%</b><div>Coverage (visited)</div></div>
+            <div class="k"><b id="kFollow">0</b><div>Upcoming Follow-ups (7d)</div></div>
+          </div>
+
+          <div class="split" style="margin-top:12px;">
+            <div class="card" style="background:#10101a;">
+              <h2>Top Products Promoted</h2>
+              <table>
+                <thead><tr><th>Product</th><th>Count</th></tr></thead>
+                <tbody id="topProducts"></tbody>
+              </table>
+            </div>
+            <div class="card" style="background:#10101a;">
+              <h2>Priority Mix (Doctors)</h2>
+              <table>
+                <thead><tr><th>Priority</th><th>Doctors</th></tr></thead>
+                <tbody id="prioMix"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- DOCTORS -->
+        <section class="card" id="tab-doctors" style="display:none;">
+          <div class="flex">
+            <h2 style="margin:0;">Doctor Master</h2>
+            <input id="docSearch" placeholder="Search doctor / city / specialty..." style="max-width:320px;" />
+            <select id="docFilterPrio" style="max-width:160px;">
+              <option value="">All priorities</option>
+              <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+            </select>
+            <button class="btn primary right" id="btnNewDoc">+ Add Doctor</button>
+          </div>
+
+          <div class="hr"></div>
+
+          <div id="docFormWrap" class="card" style="display:none;background:#10101a;">
+            <h2 id="docFormTitle">Add Doctor</h2>
+            <div class="split">
+              <div>
+                <label>Doctor Name</label>
+                <input id="dName" placeholder="Dr. Sharma" />
+              </div>
+              <div>
+                <label>Specialty</label>
+                <input id="dSpec" placeholder="Cardiologist / Diabetologist / GP" />
+              </div>
+            </div>
+            <div class="split">
+              <div>
+                <label>City</label>
+                <input id="dCity" placeholder="Pune" />
+              </div>
+              <div>
+                <label>Hospital / Clinic</label>
+                <input id="dClinic" placeholder="City Care Hospital" />
+              </div>
+            </div>
+            <div class="split">
+              <div>
+                <label>Priority</label>
+                <select id="dPrio">
+                  <option value="A">A (High)</option>
+                  <option value="B">B (Medium)</option>
+                  <option value="C">C (Low)</option>
+                </select>
+              </div>
+              <div>
+                <label>Preferred Visit Frequency</label>
+                <select id="dFreq">
+                  <option value="Monthly">Monthly</option>
+                  <option value="Fortnightly">Fortnightly</option>
+                  <option value="Weekly">Weekly</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex" style="margin-top:10px;">
+              <button class="btn primary" id="btnSaveDoc">Save</button>
+              <button class="btn" id="btnCancelDoc">Cancel</button>
+              <button class="btn danger right" id="btnDeleteDoc" style="display:none;">Delete</button>
+            </div>
+            <div class="tiny" id="docEditHint"></div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Doctor</th><th>Specialty</th><th>City</th><th>Priority</th><th>Last Visit</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="docTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- PLAN -->
+        <section class="card" id="tab-plan" style="display:none;">
+          <div class="flex">
+            <h2 style="margin:0;">Daily Plan</h2>
+            <input type="date" id="planDate" />
+            <button class="btn primary" id="btnAddPlan">+ Add Planned Visit</button>
+            <span class="right tag" id="planCountTag">0 planned</span>
+          </div>
+          <div class="hr"></div>
+
+          <div id="planForm" class="card" style="display:none;background:#10101a;">
+            <h2>Add Plan Item</h2>
+            <div class="split">
+              <div>
+                <label>Doctor</label>
+                <select id="planDoctor"></select>
+              </div>
+              <div>
+                <label>Purpose</label>
+                <select id="planPurpose">
+                  <option value="Routine Visit">Routine Visit</option>
+                  <option value="Follow-up">Follow-up</option>
+                  <option value="Product Launch">Product Launch</option>
+                  <option value="Sample Collection">Sample Collection</option>
+                </select>
+              </div>
+            </div>
+            <label>Notes</label>
+            <textarea id="planNotes" placeholder="Plan notes..."></textarea>
+            <div class="flex" style="margin-top:10px;">
+              <button class="btn primary" id="btnSavePlan">Save Plan</button>
+              <button class="btn" id="btnCancelPlan">Cancel</button>
+            </div>
+          </div>
+
+          <table style="margin-top:10px;">
+            <thead><tr><th>Status</th><th>Doctor</th><th>Purpose</th><th>Notes</th><th></th></tr></thead>
+            <tbody id="planTable"></tbody>
+          </table>
+        </section>
+
+        <!-- VISITS -->
+        <section class="card" id="tab-visits" style="display:none;">
+          <div class="flex">
+            <h2 style="margin:0;">Visit / Call Reporting</h2>
+            <input id="visitSearch" placeholder="Search by doctor/product..." style="max-width:320px;" />
+            <button class="btn primary right" id="btnNewVisit">+ New Visit</button>
+          </div>
+          <div class="hr"></div>
+
+          <div id="visitFormWrap" class="card" style="display:none;background:#10101a;">
+            <h2 id="visitFormTitle">New Visit</h2>
+            <div class="split">
+              <div>
+                <label>Doctor</label>
+                <select id="vDoctor"></select>
+              </div>
+              <div>
+                <label>Date & Time</label>
+                <input id="vDT" type="datetime-local" />
+              </div>
+            </div>
+
+            <div class="split">
+              <div>
+                <label>Products Discussed (comma separated)</label>
+                <input id="vProducts" placeholder="NovoPMA, QualityTabs, ..." />
+              </div>
+              <div>
+                <label>Samples Given (comma separated)</label>
+                <input id="vSamples" placeholder="SampleA x2, SampleB x1" />
+              </div>
+            </div>
+
+            <div class="split">
+              <div>
+                <label>Call Outcome</label>
+                <select id="vOutcome">
+                  <option value="Positive">Positive</option>
+                  <option value="Neutral">Neutral</option>
+                  <option value="Not Available">Doctor Not Available</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+              <div>
+                <label>Next Follow-up Date</label>
+                <input id="vFollow" type="date" />
+              </div>
+            </div>
+
+            <label>Remarks</label>
+            <textarea id="vRemarks" placeholder="Discussion summary, objections, commitments..."></textarea>
+
+            <div class="flex" style="margin-top:10px;">
+              <button class="btn" id="btnGetGPS">Capture GPS</button>
+              <span class="tag" id="gpsTag">GPS: not captured</span>
+              <span class="right"></span>
+            </div>
+
+            <div class="flex" style="margin-top:10px;">
+              <button class="btn primary" id="btnSaveVisit">Save Visit</button>
+              <button class="btn" id="btnCancelVisit">Cancel</button>
+              <button class="btn danger right" id="btnDeleteVisit" style="display:none;">Delete</button>
+            </div>
+            <div class="tiny" id="visitEditHint"></div>
+          </div>
+
+          <table style="margin-top:10px;">
+            <thead>
+              <tr><th>Date</th><th>Doctor</th><th>Products</th><th>Outcome</th><th>GPS</th><th></th></tr>
+            </thead>
+            <tbody id="visitTable"></tbody>
+          </table>
+        </section>
+
+        <!-- MANAGER -->
+        <section class="card" id="tab-manager" style="display:none;">
+          <div class="flex">
+            <h2 style="margin:0;">Manager View</h2>
+            <span class="tag gold">Visible to manager only</span>
+            <select id="mgrRange" class="right" style="max-width:180px;">
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="9999">All time</option>
+            </select>
+          </div>
+          <div class="hr"></div>
+
+          <div class="card" style="background:#10101a;">
+            <h2>Team Productivity</h2>
+            <table>
+              <thead><tr><th>MR</th><th>Total Calls</th><th>Unique Doctors</th><th>Last Activity</th></tr></thead>
+              <tbody id="mgrTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- AUDIT -->
+        <section class="card" id="tab-audit" style="display:none;">
+          <div class="flex">
+            <h2 style="margin:0;">Audit Log</h2>
+            <input id="auditSearch" placeholder="Search log..." style="max-width:320px;" />
+            <button class="btn right" id="btnClearAudit">Clear Log</button>
+          </div>
+          <div class="hr"></div>
+          <table>
+            <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+            <tbody id="auditTable"></tbody>
+          </table>
+        </section>
+
+        <!-- EXPORT -->
+        <section class="card" id="tab-export" style="display:none;">
+          <h2>Export</h2>
+          <div class="muted">Download data as CSV (demo).</div>
+          <div class="hr"></div>
+          <div class="flex">
+            <button class="btn primary" id="expDoctors">Export Doctors CSV</button>
+            <button class="btn primary" id="expVisits">Export Visits CSV</button>
+          </div>
+          <div class="hr"></div>
+          <div class="tiny">
+            Want this as a real product? Next upgrades: multi-tenant DB, approvals, content versioning, WhatsApp API integration, offline sync.
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===========================
+   Offline Demo Data Model
+   =========================== */
+const LS = {
+  users: "pm_demo_users_v1",
+  session: "pm_demo_session_v1",
+  doctors: "pm_demo_doctors_v1",
+  visits: "pm_demo_visits_v1",
+  plans: "pm_demo_plans_v1",
+  audit: "pm_demo_audit_v1"
+};
+
+const nowISO = () => new Date().toISOString();
+const fmtDate = (iso) => {
+  try{
+    const d = new Date(iso);
+    return d.toLocaleString();
+  }catch{ return iso; }
+};
+const todayYMD = () => new Date().toISOString().slice(0,10);
+const addDays = (d, days) => {
+  const x = new Date(d);
+  x.setDate(x.getDate()+days);
+  return x.toISOString().slice(0,10);
+};
+
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.style.display = "block";
+  setTimeout(()=> el.style.display="none", 2200);
+}
+
+function load(key, fallback){
+  const v = localStorage.getItem(key);
+  return v ? JSON.parse(v) : fallback;
+}
+function save(key, value){
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function audit(action, details=""){
+  const s = getSession();
+  const log = load(LS.audit, []);
+  log.unshift({ t: nowISO(), user: s?.username || "anonymous", action, details });
+  save(LS.audit, log.slice(0, 500));
+}
+
+/* ===========================
+   Seed & Reset
+   =========================== */
+function ensureUsers(){
+  const u = load(LS.users, null);
+  if(u) return;
+  save(LS.users, [
+    { username:"mr1", pass:"1234", role:"MR", name:"MR - Rajesh" },
+    { username:"mr2", pass:"1234", role:"MR", name:"MR - Neha" },
+    { username:"mgr1", pass:"1234", role:"MANAGER", name:"Manager - Amit" }
+  ]);
+}
+function seedData(){
+  ensureUsers();
+  const doctors = load(LS.doctors, []);
+  if(doctors.length){
+    toast("Sample data already present");
+    return;
+  }
+  const sampleDocs = [
+    {id: crypto.randomUUID(), name:"Dr. Sharma", spec:"Cardiologist", city:"Pune", clinic:"City Care", prio:"A", freq:"Fortnightly", createdAt:nowISO()},
+    {id: crypto.randomUUID(), name:"Dr. Patil", spec:"Diabetologist", city:"Pune", clinic:"MedPlus Clinic", prio:"A", freq:"Monthly", createdAt:nowISO()},
+    {id: crypto.randomUUID(), name:"Dr. Khan", spec:"GP", city:"Indore", clinic:"Health First", prio:"B", freq:"Monthly", createdAt:nowISO()},
+    {id: crypto.randomUUID(), name:"Dr. Iyer", spec:"Orthopedic", city:"Mumbai", clinic:"Ortho Point", prio:"C", freq:"Monthly", createdAt:nowISO()}
+  ];
+  save(LS.doctors, sampleDocs);
+
+  const visits = [
+    mkVisit("mr1", sampleDocs[0].id, addDays(new Date(), -2), ["NovoPMA","CardioMax"], ["CardioMax x2"], "Positive", addDays(new Date(), 5), "Discussed adherence & BP control.", null),
+    mkVisit("mr1", sampleDocs[1].id, addDays(new Date(), -1), ["GlucoCare"], ["GlucoCare x1"], "Neutral", addDays(new Date(), 10), "Asked for updated visual aid.", null),
+    mkVisit("mr2", sampleDocs[2].id, addDays(new Date(), -3), ["AntibiX"], ["AntibiX x3"], "Not Available", "", "Doctor busy, reschedule.", null),
+  ];
+  save(LS.visits, visits);
+
+  save(LS.plans, []);
+  audit("SEED_DATA", "Loaded sample doctors & visits");
+  toast("Sample data loaded");
+  renderAll();
+}
+
+function mkVisit(username, docId, ymdOrDate, products, samples, outcome, follow, remarks, gps){
+  const dt = (typeof ymdOrDate === "string" && ymdOrDate.length===10)
+    ? (ymdOrDate + "T10:00")
+    : new Date(ymdOrDate).toISOString().slice(0,16);
+  return {
+    id: crypto.randomUUID(),
+    username,
+    doctorId: docId,
+    dt,
+    products,
+    samples,
+    outcome,
+    followDate: follow || "",
+    remarks: remarks || "",
+    gps: gps || null,
+    device: navigator.userAgent,
+    createdAt: nowISO(),
+    updatedAt: nowISO()
+  };
+}
+
+function resetDemo(){
+  Object.values(LS).forEach(k=> localStorage.removeItem(k));
+  ensureUsers();
+  toast("Demo reset");
+  location.reload();
+}
+
+/* ===========================
+   Session & Auth
+   =========================== */
+function getSession(){ return load(LS.session, null); }
+function setSession(s){ save(LS.session, s); }
+
+function login(username, pass){
+  ensureUsers();
+  const users = load(LS.users, []);
+  const u = users.find(x => x.username===username && x.pass===pass);
+  if(!u) return false;
+  setSession({ username:u.username, role:u.role, name:u.name, signedInAt: nowISO() });
+  audit("LOGIN", `role=${u.role}`);
+  return true;
+}
+function logout(){
+  audit("LOGOUT","");
+  localStorage.removeItem(LS.session);
+  location.reload();
+}
+
+/* ===========================
+   Helpers
+   =========================== */
+function requireRole(role){
+  const s = getSession();
+  return s && s.role===role;
+}
+
+function withinDays(dtLocal, days){
+  const range = Number(days);
+  if(range===9999) return true;
+  const d = new Date(dtLocal);
+  const from = new Date();
+  from.setDate(from.getDate()-range);
+  return d >= from;
+}
+
+function csvDownload(filename, rows){
+  const esc = (v) => {
+    const s = (v ?? "").toString();
+    if(/[",\n]/.test(s)) return `"${s.replaceAll('"','""')}"`;
+    return s;
+  };
+  const csv = rows.map(r => r.map(esc).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ===========================
+   UI State
+   =========================== */
+let ACTIVE_TAB = "dashboard";
+let EDIT_DOC_ID = null;
+let EDIT_VISIT_ID = null;
+let LAST_GPS = null;
+
+/* ===========================
+   Rendering
+   =========================== */
+function setTab(tab){
+  ACTIVE_TAB = tab;
+  document.querySelectorAll("main section.card").forEach(s => s.style.display="none");
+  document.getElementById("tab-"+tab).style.display="block";
+  document.querySelectorAll(".nav .btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tabBtn-"+tab).classList.add("active");
+
+  // role gating
+  const s = getSession();
+  const mgrBtn = document.getElementById("tabBtn-manager");
+  const mgrTab = document.getElementById("tab-manager");
+  if(s?.role !== "MANAGER"){
+    mgrBtn.style.display="none";
+    mgrTab.style.display="none";
+  }else{
+    mgrBtn.style.display="block";
+  }
+
+  renderAll();
+}
+
+function renderSessionPill(){
+  const s = getSession();
+  const pill = document.getElementById("sessionPill");
+  const logoutBtn = document.getElementById("btnLogout");
+  if(!s){
+    pill.textContent = "Not signed in";
+    logoutBtn.style.display="none";
+    return;
+  }
+  pill.textContent = `${s.name} (${s.role})`;
+  logoutBtn.style.display="inline-block";
+}
+
+function renderDashboard(){
+  const s = getSession(); if(!s) return;
+  const range = document.getElementById("dashRange").value;
+  document.getElementById("dashRangeTag").textContent = (range==="9999") ? "All time" : `Last ${range} days`;
+
+  const doctors = load(LS.doctors, []);
+  const visits = load(LS.visits, []).filter(v => v.username===s.username || s.role==="MANAGER");
+
+  const filtered = visits.filter(v => withinDays(v.dt, range));
+  document.getElementById("kCalls").textContent = filtered.length;
+  document.getElementById("kDoctors").textContent = doctors.length;
+
+  const uniqueVisited = new Set(filtered.map(v=>v.doctorId)).size;
+  const cov = doctors.length ? Math.round((uniqueVisited/doctors.length)*100) : 0;
+  document.getElementById("kCoverage").textContent = cov + "%";
+
+  // upcoming follow-ups next 7 days
+  const today = todayYMD();
+  const next7 = addDays(new Date(), 7);
+  const followCount = filtered.filter(v => v.followDate && v.followDate>=today && v.followDate<=next7).length;
+  document.getElementById("kFollow").textContent = followCount;
+
+  // top products
+  const count = {};
+  filtered.forEach(v => (v.products||[]).forEach(p => {
+    const k=p.trim(); if(!k) return;
+    count[k]=(count[k]||0)+1;
+  }));
+  const top = Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const tp = document.getElementById("topProducts");
+  tp.innerHTML = top.length ? top.map(([p,c])=>`<tr><td>${p}</td><td>${c}</td></tr>`).join("") : `<tr><td colspan="2" class="muted">No data</td></tr>`;
+
+  // priority mix
+  const mix = {A:0,B:0,C:0};
+  doctors.forEach(d => mix[d.prio]=(mix[d.prio]||0)+1);
+  const pm = document.getElementById("prioMix");
+  pm.innerHTML = ["A","B","C"].map(k=>`<tr><td><span class="tag ${k==="A"?"gold":""}">${k}</span></td><td>${mix[k]||0}</td></tr>`).join("");
+}
+
+function lastVisitForDoctor(docId, usernameOrNull){
+  const visits = load(LS.visits, []);
+  const v = visits
+    .filter(x => x.doctorId===docId && (!usernameOrNull || x.username===usernameOrNull))
+    .sort((a,b)=> new Date(b.dt)-new Date(a.dt))[0];
+  return v ? v.dt : "";
+}
+
+function renderDoctors(){
+  const s = getSession(); if(!s) return;
+  const doctors = load(LS.doctors, []);
+  const q = (document.getElementById("docSearch").value || "").toLowerCase();
+  const pr = document.getElementById("docFilterPrio").value;
+
+  const rows = doctors
+    .filter(d => (!pr || d.prio===pr))
+    .filter(d => {
+      if(!q) return true;
+      return (d.name+d.spec+d.city+d.clinic).toLowerCase().includes(q);
+    })
+    .map(d => {
+      const lv = lastVisitForDoctor(d.id, (s.role==="MANAGER") ? null : s.username);
+      return `
+        <tr>
+          <td><b>${d.name}</b><div class="tiny muted">${d.clinic || ""}</div></td>
+          <td>${d.spec || "-"}</td>
+          <td>${d.city || "-"}</td>
+          <td><span class="tag ${d.prio==="A"?"gold":""}">${d.prio}</span></td>
+          <td class="muted">${lv ? new Date(lv).toLocaleString() : "-"}</td>
+          <td><button class="btn" onclick="editDoctor('${d.id}')">Edit</button></td>
+        </tr>
+      `;
+    });
+
+  document.getElementById("docTable").innerHTML = rows.length ? rows.join("") : `<tr><td colspan="6" class="muted">No doctors found</td></tr>`;
+
+  // populate doctor dropdowns
+  const opts = doctors.map(d => `<option value="${d.id}">${d.name} • ${d.city} • ${d.prio}</option>`).join("");
+  document.getElementById("vDoctor").innerHTML = `<option value="">Select doctor</option>` + opts;
+  document.getElementById("planDoctor").innerHTML = `<option value="">Select doctor</option>` + opts;
+}
+
+function renderPlans(){
+  const s = getSession(); if(!s) return;
+  const date = document.getElementById("planDate").value || todayYMD();
+  const plans = load(LS.plans, []).filter(p => p.username===s.username && p.date===date);
+  const doctors = load(LS.doctors, []);
+  const byId = Object.fromEntries(doctors.map(d=>[d.id,d]));
+
+  document.getElementById("planCountTag").textContent = `${plans.length} planned`;
+
+  const rows = plans.map(p => {
+    const d = byId[p.doctorId];
+    const statusTag = p.done ? `<span class="tag ok">Done</span>` : `<span class="tag">Planned</span>`;
+    return `
+      <tr>
+        <td>${statusTag}</td>
+        <td><b>${d?.name || "Unknown"}</b><div class="tiny muted">${d?.city||""}</div></td>
+        <td>${p.purpose}</td>
+        <td class="muted">${p.notes||"-"}</td>
+        <td class="flex">
+          <button class="btn" onclick="togglePlanDone('${p.id}')">${p.done?"Mark Planned":"Mark Done"}</button>
+          <button class="btn danger" onclick="deletePlan('${p.id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("planTable").innerHTML = rows.length ? rows.join("") : `<tr><td colspan="5" class="muted">No plans for this date</td></tr>`;
+}
+
+function renderVisits(){
+  const s = getSession(); if(!s) return;
+  const visits = load(LS.visits, []).filter(v => (s.role==="MANAGER") ? true : v.username===s.username);
+  const q = (document.getElementById("visitSearch").value||"").toLowerCase();
+
+  const doctors = load(LS.doctors, []);
+  const byId = Object.fromEntries(doctors.map(d=>[d.id,d]));
+
+  const rows = visits
+    .filter(v => {
+      if(!q) return true;
+      const dn = byId[v.doctorId]?.name || "";
+      const prod = (v.products||[]).join(", ");
+      return (dn + prod + v.outcome).toLowerCase().includes(q);
+    })
+    .sort((a,b)=> new Date(b.dt)-new Date(a.dt))
+    .slice(0, 200)
+    .map(v => {
+      const d = byId[v.doctorId];
+      const gps = v.gps ? `<span class="tag ok">Yes</span>` : `<span class="tag">No</span>`;
+      const outTag = v.outcome==="Positive" ? "ok" : (v.outcome==="Rejected" ? "bad" : "");
+      return `
+        <tr>
+          <td>${new Date(v.dt).toLocaleString()}<div class="tiny muted">${v.username}</div></td>
+          <td><b>${d?.name || "Unknown"}</b><div class="tiny muted">${d?.city||""}</div></td>
+          <td class="muted">${(v.products||[]).join(", ") || "-"}</td>
+          <td><span class="tag ${outTag}">${v.outcome}</span></td>
+          <td>${gps}</td>
+          <td><button class="btn" onclick="editVisit('${v.id}')">View/Edit</button></td>
+        </tr>
+      `;
+    });
+
+  document.getElementById("visitTable").innerHTML = rows.length ? rows.join("") : `<tr><td colspan="6" class="muted">No visits found</td></tr>`;
+}
+
+function renderManager(){
+  const s = getSession(); if(!s || s.role!=="MANAGER") return;
+  const range = document.getElementById("mgrRange").value;
+  const visits = load(LS.visits, []).filter(v => withinDays(v.dt, range));
+  const users = load(LS.users, []).filter(u => u.role==="MR");
+
+  const byUser = {};
+  visits.forEach(v=>{
+    byUser[v.username]=byUser[v.username]||{calls:0,docs:new Set(),last:""};
+    byUser[v.username].calls++;
+    byUser[v.username].docs.add(v.doctorId);
+    if(!byUser[v.username].last || new Date(v.dt)>new Date(byUser[v.username].last)) byUser[v.username].last=v.dt;
+  });
+
+  const rows = users.map(u=>{
+    const x = byUser[u.username] || {calls:0,docs:new Set(),last:""};
+    return `<tr>
+      <td><b>${u.name}</b><div class="tiny muted">${u.username}</div></td>
+      <td>${x.calls}</td>
+      <td>${x.docs.size}</td>
+      <td class="muted">${x.last ? new Date(x.last).toLocaleString() : "-"}</td>
+    </tr>`;
+  });
+
+  document.getElementById("mgrTable").innerHTML = rows.join("");
+}
+
+function renderAudit(){
+  const q = (document.getElementById("auditSearch").value||"").toLowerCase();
+  const logs = load(LS.audit, []);
+  const rows = logs
+    .filter(l => !q || (l.user+l.action+l.details+l.t).toLowerCase().includes(q))
+    .slice(0, 300)
+    .map(l => `<tr>
+      <td class="muted">${fmtDate(l.t)}</td>
+      <td><b>${l.user}</b></td>
+      <td><span class="tag">${l.action}</span></td>
+      <td class="muted">${l.details||""}</td>
+    </tr>`);
+  document.getElementById("auditTable").innerHTML = rows.length ? rows.join("") : `<tr><td colspan="4" class="muted">No audit entries</td></tr>`;
+}
+
+function renderAll(){
+  renderSessionPill();
+  renderDoctors();
+  renderPlans();
+  renderVisits();
+  renderDashboard();
+  renderManager();
+  renderAudit();
+}
+
+/* ===========================
+   Doctor CRUD
+   =========================== */
+function showDocForm(show){
+  document.getElementById("docFormWrap").style.display = show ? "block" : "none";
+}
+function clearDocForm(){
+  EDIT_DOC_ID = null;
+  document.getElementById("docFormTitle").textContent = "Add Doctor";
+  ["dName","dSpec","dCity","dClinic"].forEach(id => document.getElementById(id).value="");
+  document.getElementById("dPrio").value="A";
+  document.getElementById("dFreq").value="Monthly";
+  document.getElementById("btnDeleteDoc").style.display="none";
+  document.getElementById("docEditHint").textContent="";
+  showDocForm(true);
+}
+window.editDoctor = function(id){
+  const doctors = load(LS.doctors, []);
+  const d = doctors.find(x=>x.id===id);
+  if(!d) return;
+  EDIT_DOC_ID = id;
+  document.getElementById("docFormTitle").textContent = "Edit Doctor";
+  document.getElementById("dName").value = d.name||"";
+  document.getElementById("dSpec").value = d.spec||"";
+  document.getElementById("dCity").value = d.city||"";
+  document.getElementById("dClinic").value = d.clinic||"";
+  document.getElementById("dPrio").value = d.prio||"A";
+  document.getElementById("dFreq").value = d.freq||"Monthly";
+  document.getElementById("btnDeleteDoc").style.display="inline-block";
+  document.getElementById("docEditHint").textContent = "Editing existing record (demo).";
+  showDocForm(true);
+};
+
+function saveDoctor(){
+  const name = document.getElementById("dName").value.trim();
+  if(!name){ toast("Doctor name required"); return; }
+  const d = {
+    id: EDIT_DOC_ID || crypto.randomUUID(),
+    name,
+    spec: document.getElementById("dSpec").value.trim(),
+    city: document.getElementById("dCity").value.trim(),
+    clinic: document.getElementById("dClinic").value.trim(),
+    prio: document.getElementById("dPrio").value,
+    freq: document.getElementById("dFreq").value,
+    updatedAt: nowISO()
+  };
+  const doctors = load(LS.doctors, []);
+  const idx = doctors.findIndex(x=>x.id===d.id);
+  if(idx>=0){
+    d.createdAt = doctors[idx].createdAt;
+    doctors[idx]=d;
+    audit("DOCTOR_UPDATE", d.name);
+    toast("Doctor updated");
+  }else{
+    d.createdAt = nowISO();
+    doctors.unshift(d);
+    audit("DOCTOR_CREATE", d.name);
+    toast("Doctor added");
+  }
+  save(LS.doctors, doctors);
+  showDocForm(false);
+  renderAll();
+}
+
+function deleteDoctor(){
+  if(!EDIT_DOC_ID) return;
+  const doctors = load(LS.doctors, []);
+  const d = doctors.find(x=>x.id===EDIT_DOC_ID);
+  save(LS.doctors, doctors.filter(x=>x.id!==EDIT_DOC_ID));
+  audit("DOCTOR_DELETE", d?.name || EDIT_DOC_ID);
+  toast("Doctor deleted");
+  showDocForm(false);
+  renderAll();
+}
+
+/* ===========================
+   Plan
+   =========================== */
+function showPlanForm(show){
+  document.getElementById("planForm").style.display = show ? "block" : "none";
+}
+function addPlan(){
+  showPlanForm(true);
+  document.getElementById("planNotes").value="";
+  document.getElementById("planPurpose").value="Routine Visit";
+}
+function savePlan(){
+  const s = getSession();
+  const date = document.getElementById("planDate").value || todayYMD();
+  const doctorId = document.getElementById("planDoctor").value;
+  if(!doctorId){ toast("Select doctor"); return; }
+  const plans = load(LS.plans, []);
+  plans.unshift({
+    id: crypto.randomUUID(),
+    username: s.username,
+    date,
+    doctorId,
+    purpose: document.getElementById("planPurpose").value,
+    notes: document.getElementById("planNotes").value.trim(),
+    done:false,
+    createdAt: nowISO()
+  });
+  save(LS.plans, plans);
+  audit("PLAN_CREATE", `date=${date}`);
+  toast("Plan saved");
+  showPlanForm(false);
+  renderAll();
+}
+window.togglePlanDone = function(id){
+  const plans = load(LS.plans, []);
+  const p = plans.find(x=>x.id===id);
+  if(!p) return;
+  p.done = !p.done;
+  save(LS.plans, plans);
+  audit("PLAN_TOGGLE", `done=${p.done}`);
+  renderAll();
+};
+window.deletePlan = function(id){
+  const plans = load(LS.plans, []);
+  save(LS.plans, plans.filter(x=>x.id!==id));
+  audit("PLAN_DELETE", id);
+  renderAll();
+};
+
+/* ===========================
+   Visits CRUD
+   =========================== */
+function showVisitForm(show){
+  document.getElementById("visitFormWrap").style.display = show ? "block" : "none";
+}
+function clearVisitForm(){
+  EDIT_VISIT_ID = null;
+  LAST_GPS = null;
+  document.getElementById("visitFormTitle").textContent = "New Visit";
+  document.getElementById("vDoctor").value="";
+  document.getElementById("vDT").value = new Date().toISOString().slice(0,16);
+  document.getElementById("vProducts").value="";
+  document.getElementById("vSamples").value="";
+  document.getElementById("vOutcome").value="Positive";
+  document.getElementById("vFollow").value="";
+  document.getElementById("vRemarks").value="";
+  document.getElementById("gpsTag").textContent = "GPS: not captured";
+  document.getElementById("btnDeleteVisit").style.display="none";
+  document.getElementById("visitEditHint").textContent="";
+  showVisitForm(true);
+}
+window.editVisit = function(id){
+  const visits = load(LS.visits, []);
+  const v = visits.find(x=>x.id===id);
+  if(!v) return;
+  EDIT_VISIT_ID = id;
+  LAST_GPS = v.gps || null;
+  document.getElementById("visitFormTitle").textContent = "Edit Visit";
+  document.getElementById("vDoctor").value = v.doctorId;
+  document.getElementById("vDT").value = v.dt;
+  document.getElementById("vProducts").value = (v.products||[]).join(", ");
+  document.getElementById("vSamples").value = (v.samples||[]).join(", ");
+  document.getElementById("vOutcome").value = v.outcome;
+  document.getElementById("vFollow").value = v.followDate || "";
+  document.getElementById("vRemarks").value = v.remarks || "";
+  document.getElementById("gpsTag").textContent = v.gps ? `GPS: ${v.gps.lat.toFixed(5)}, ${v.gps.lon.toFixed(5)}` : "GPS: not captured";
+  document.getElementById("btnDeleteVisit").style.display="inline-block";
+  document.getElementById("visitEditHint").textContent = "Editing existing visit record (demo).";
+  showVisitForm(true);
+};
+
+function getGPS(){
+  if(!navigator.geolocation){
+    toast("Geolocation not supported");
+    return;
+  }
+  toast("Fetching GPS...");
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      LAST_GPS = { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy, t: nowISO() };
+      document.getElementById("gpsTag").textContent = `GPS: ${LAST_GPS.lat.toFixed(5)}, ${LAST_GPS.lon.toFixed(5)} (±${Math.round(LAST_GPS.acc)}m)`;
+      audit("GPS_CAPTURE", `acc=${Math.round(LAST_GPS.acc)}m`);
+    },
+    err => {
+      toast("GPS failed: " + err.message);
+      audit("GPS_FAIL", err.message);
+    },
+    { enableHighAccuracy:true, timeout:8000 }
+  );
+}
+
+function saveVisit(){
+  const s = getSession();
+  const doctorId = document.getElementById("vDoctor").value;
+  if(!doctorId){ toast("Select doctor"); return; }
+  const dt = document.getElementById("vDT").value;
+  const products = document.getElementById("vProducts").value.split(",").map(x=>x.trim()).filter(Boolean);
+  const samples = document.getElementById("vSamples").value.split(",").map(x=>x.trim()).filter(Boolean);
+
+  const visit = {
+    id: EDIT_VISIT_ID || crypto.randomUUID(),
+    username: EDIT_VISIT_ID ? load(LS.visits,[]).find(x=>x.id===EDIT_VISIT_ID)?.username || s.username : s.username,
+    doctorId,
+    dt,
+    products,
+    samples,
+    outcome: document.getElementById("vOutcome").value,
+    followDate: document.getElementById("vFollow").value || "",
+    remarks: document.getElementById("vRemarks").value.trim(),
+    gps: LAST_GPS,
+    device: navigator.userAgent,
+    updatedAt: nowISO()
+  };
+
+  let visits = load(LS.visits, []);
+  const idx = visits.findIndex(x=>x.id===visit.id);
+
+  // Security-ish (demo): non-manager cannot edit other MR's visit
+  if(idx>=0){
+    const existing = visits[idx];
+    if(s.role!=="MANAGER" && existing.username !== s.username){
+      toast("Not allowed to edit other MR's visit");
+      return;
+    }
+    visit.createdAt = existing.createdAt;
+    visits[idx] = {...existing, ...visit};
+    audit("VISIT_UPDATE", `doctorId=${doctorId}`);
+    toast("Visit updated");
+  }else{
+    visit.createdAt = nowISO();
+    visits.unshift(visit);
+    audit("VISIT_CREATE", `doctorId=${doctorId}`);
+    toast("Visit saved");
+  }
+  save(LS.visits, visits);
+  showVisitForm(false);
+  renderAll();
+}
+
+function deleteVisit(){
+  const s = getSession();
+  if(!EDIT_VISIT_ID) return;
+  let visits = load(LS.visits, []);
+  const v = visits.find(x=>x.id===EDIT_VISIT_ID);
+  if(v && s.role!=="MANAGER" && v.username!==s.username){
+    toast("Not allowed");
+    return;
+  }
+  visits = visits.filter(x=>x.id!==EDIT_VISIT_ID);
+  save(LS.visits, visits);
+  audit("VISIT_DELETE", EDIT_VISIT_ID);
+  toast("Visit deleted");
+  showVisitForm(false);
+  renderAll();
+}
+
+/* ===========================
+   Audit
+   =========================== */
+function clearAudit(){
+  save(LS.audit, []);
+  toast("Audit log cleared");
+  renderAudit();
+}
+
+/* ===========================
+   Export
+   =========================== */
+function exportDoctors(){
+  const doctors = load(LS.doctors, []);
+  const rows = [
+    ["id","name","specialty","city","clinic","priority","frequency","createdAt","updatedAt"],
+    ...doctors.map(d => [d.id,d.name,d.spec,d.city,d.clinic,d.prio,d.freq,d.createdAt,d.updatedAt])
+  ];
+  csvDownload("doctors.csv", rows);
+  audit("EXPORT_DOCTORS","csv");
+}
+function exportVisits(){
+  const visits = load(LS.visits, []);
+  const doctors = load(LS.doctors, []);
+  const byId = Object.fromEntries(doctors.map(d=>[d.id,d]));
+  const rows = [
+    ["id","username","doctor","city","dt","products","samples","outcome","followDate","gps_lat","gps_lon","remarks","createdAt","updatedAt"],
+    ...visits.map(v => [
+      v.id,
+      v.username,
+      byId[v.doctorId]?.name || "Unknown",
+      byId[v.doctorId]?.city || "",
+      v.dt,
+      (v.products||[]).join("; "),
+      (v.samples||[]).join("; "),
+      v.outcome,
+      v.followDate,
+      v.gps?.lat || "",
+      v.gps?.lon || "",
+      v.remarks,
+      v.createdAt,
+      v.updatedAt
+    ])
+  ];
+  csvDownload("visits.csv", rows);
+  audit("EXPORT_VISITS","csv");
+}
+
+/* ===========================
+   Events / Init
+   =========================== */
+document.getElementById("btnSeed").addEventListener("click", seedData);
+document.getElementById("btnReset").addEventListener("click", resetDemo);
+document.getElementById("btnLogout").addEventListener("click", logout);
+
+document.getElementById("btnLogin").addEventListener("click", ()=>{
+  const u = document.getElementById("lgUser").value.trim();
+  const p = document.getElementById("lgPass").value.trim();
+  if(login(u,p)){
+    document.getElementById("loginCard").style.display="none";
+    document.getElementById("app").style.display="block";
+    document.getElementById("planDate").value = todayYMD();
+    setTab("dashboard");
+    toast("Signed in");
+  }else{
+    toast("Invalid credentials");
+  }
+});
+
+document.querySelectorAll(".nav .btn").forEach(b=>{
+  b.addEventListener("click", ()=> setTab(b.dataset.tab));
+});
+
+document.getElementById("dashRange").addEventListener("change", renderDashboard);
+
+document.getElementById("docSearch").addEventListener("input", renderDoctors);
+document.getElementById("docFilterPrio").addEventListener("change", renderDoctors);
+document.getElementById("btnNewDoc").addEventListener("click", clearDocForm);
+document.getElementById("btnCancelDoc").addEventListener("click", ()=> showDocForm(false));
+document.getElementById("btnSaveDoc").addEventListener("click", saveDoctor);
+document.getElementById("btnDeleteDoc").addEventListener("click", deleteDoctor);
+
+document.getElementById("planDate").addEventListener("change", renderPlans);
+document.getElementById("btnAddPlan").addEventListener("click", addPlan);
+document.getElementById("btnCancelPlan").addEventListener("click", ()=> showPlanForm(false));
+document.getElementById("btnSavePlan").addEventListener("click", savePlan);
+
+document.getElementById("visitSearch").addEventListener("input", renderVisits);
+document.getElementById("btnNewVisit").addEventListener("click", clearVisitForm);
+document.getElementById("btnCancelVisit").addEventListener("click", ()=> showVisitForm(false));
+document.getElementById("btnGetGPS").addEventListener("click", getGPS);
+document.getElementById("btnSaveVisit").addEventListener("click", saveVisit);
+document.getElementById("btnDeleteVisit").addEventListener("click", deleteVisit);
+
+document.getElementById("mgrRange").addEventListener("change", renderManager);
+
+document.getElementById("auditSearch").addEventListener("input", renderAudit);
+document.getElementById("btnClearAudit").addEventListener("click", clearAudit);
+
+document.getElementById("expDoctors").addEventListener("click", exportDoctors);
+document.getElementById("expVisits").addEventListener("click", exportVisits);
+
+// Boot
+ensureUsers();
+renderSessionPill();
+
+// Auto login if session exists
+const s = getSession();
+if(s){
+  document.getElementById("loginCard").style.display="none";
+  document.getElementById("app").style.display="block";
+  document.getElementById("planDate").value = todayYMD();
+  setTab("dashboard");
+}
+
+// default tab button active style
+document.getElementById("tabBtn-dashboard").classList.add("active");
+</script>
+</body>
+</html>
